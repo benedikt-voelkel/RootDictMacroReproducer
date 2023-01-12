@@ -33,16 +33,15 @@ $INSTALLDIR/bin/executable $SOURCEDIR/macros/macro1.C "myFunc()"
 $INSTALLDIR/bin/executable $SOURCEDIR/macros/macro1.C "myFunc()"
 
 # Fails e.g. with
-# error: no type named 'func' in namespace 'namespaceA::namespaceB'
+# error: no type named 'func' in namespace 'base::othernamespace'
 ```
 
 ### The inconsitency
 
-Open `$SOURCEDIR/macros/macro1.C` and uncomment the line `namespaceA::namespaceB::A object;`.
+Open `$SOURCEDIR/macros/macro1.C` and uncomment the line `base::othernamespace::A any;`.
 Now, running the executable again leads to the expected behaviour.
 
 That points to the fact that something is inconsistent with the library loading on the ROOT side.
-
 
 
 ## Overall code structure
@@ -51,7 +50,7 @@ There are 2 libraries.
 `libNamespaceStuff` contains some utility code while `libMacroHelper` provides the capability of dynamically parsing a a macro and calling a specific function in it.
 They 2 libraries have nothing to do with each other (e.g. none is linked against the other).
 
-`libNamespaceStuff` defines a class `namespaceA::namespaceB::A` as well as functions `namespaceA::namespaceB::func` and just `hello`.
+`libNamespaceStuff` defines a class `base::othernamespace::A` as well as functions `base::othernamespace::func` and just `hello`.
 In addition, ROOT dictionary code is compiled into a `rootmap` and `pcm` file which are installed along with the libraries.
 
 The `executable` uses `libMacroHelper`'s `GetFromMacro` to load a function from a macro and it is used to extract the object that is returned by the macro function.

@@ -5,8 +5,8 @@
 
 #include "Rtypes.h"
 
-namespace namespaceA {
-namespace namespaceB {
+namespace base {
+namespace othernamespace {
 
 class A
 {
@@ -25,10 +25,6 @@ class A
 void func(int& i);
 
 }
-}
-
-void inline hello()
-{
 }
 
 #endif

@@ -35,6 +35,11 @@ function(rwd_add_library)
   endif()
 
 
+  if(A_DEPENDENCIES)
+    target_link_libraries(${target} PUBLIC ${A_DEPENDENCIES})
+    set_target_properties(${target} PROPERTIES INTERFACE_LINK_LIBRARIES "${A_DEPENDENCIES}")
+  endif()
+
   if(A_ROOT_DICTIONARY_HEADERS)
 
     # Build the LD_LIBRARY_PATH required to get rootcling running fine
@@ -43,9 +48,13 @@ function(rwd_add_library)
     get_filename_component(LD_LIBRARY_PATH ${ROOT_Core_LIBRARY} DIRECTORY)
     # and possibly toolchain libs if we are using a toolchain
     if(DEFINED ENV{GCC_TOOLCHAIN_ROOT})
+      message(STATUS "BLAH")
       set(LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:$ENV{GCC_TOOLCHAIN_ROOT}/lib")
       set(LD_LIBRARY_PATH "${LD_LIBRARY_PATH}:$ENV{GCC_TOOLCHAIN_ROOT}/lib64")
     endif()
+
+    message(STATUS "LD_LIBRARY_PATH: ${LD_LIBRARY_PATH}")
+    message(STATUS ${list_pcm_deps_${target}})
 
     set(dictionary G__${target})
     set(pcmFile "${CMAKE_CURRENT_BINARY_DIR}/${dictionary}_rdict.pcm")
@@ -53,6 +62,7 @@ function(rwd_add_library)
     set(dictionaryFile "G__${target}.cxx")
     set(linkdef "${A_LINKDEFDIR}/${target}LinkDef.h")
     message("LINKDEF for target ${target} assumed at ${linkdef}")
+    message("${A_ROOT_DICTIONARY_HEADERS}")
     # Since this is actually generated before libraries are built, we have the dictionary files available even though this is inside a CMake function
     add_custom_command(
       OUTPUT ${dictionaryFile} ${pcmFile} ${rootmapFile}
@@ -61,7 +71,7 @@ function(rwd_add_library)
       ${CMAKE_COMMAND} -E env LD_LIBRARY_PATH=${LD_LIBRARY_PATH} ${ROOT_rootcling_CMD}
       -f ${dictionaryFile}
       -rmf ${rootmapFile}
-      -rml ${target}
+      -rml $<TARGET_FILE_NAME:${target}>
       -noGlobalUsingStd
       -inlineInputHeader
       -I$<JOIN:$<REMOVE_DUPLICATES:$<TARGET_PROPERTY:${target},INCLUDE_DIRECTORIES>>,$<SEMICOLON>-I>
@@ -70,6 +80,7 @@ function(rwd_add_library)
       ${A_ROOT_DICTIONARY_HEADERS} ${linkdef}
       COMMAND_EXPAND_LISTS
     )
+
     # Now add to target
     target_sources(${target} PRIVATE ${dictionaryFile})
     if(NOT ROOT::RIO IN_LIST A_DEPENDENCIES)
@@ -78,11 +89,17 @@ function(rwd_add_library)
       message(STATUS "Link against ROOT::RIO")
       target_link_libraries(${target} PUBLIC ROOT::RIO)
     endif()
-  endif()
 
-  if(A_DEPENDENCIES)
-    target_link_libraries(${target} PUBLIC ${A_DEPENDENCIES})
-    set_target_properties(${target} PROPERTIES INTERFACE_LINK_LIBRARIES "${A_DEPENDENCIES}")
+    foreach(h IN LISTS A_ROOT_DICTIONARY_HEADERS)
+      if(IS_ABSOLUTE ${h})
+        message(FATAL_ERROR "Path ${h} should be relative, not absolute")
+      endif()
+      get_filename_component(a ${h} ABSOLUTE)
+      string(REPLACE "${h}" "" d "${a}")
+      list(APPEND dirs ${d})
+    endforeach()
+    list(REMOVE_DUPLICATES dirs)
+    target_include_directories(${target} PRIVATE ${dirs})
   endif()
 
   install(TARGETS ${target}

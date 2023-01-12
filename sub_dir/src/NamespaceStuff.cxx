@@ -2,8 +2,8 @@
 
 #include "NamespaceStuff.h"
 
-namespace namespaceA {
-namespace namespaceB {
+namespace base {
+namespace othernamespace {
 
 void func(int& i)
 {

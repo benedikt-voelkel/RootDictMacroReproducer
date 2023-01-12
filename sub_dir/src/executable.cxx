@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "MacroHelper.h"
+#include "Base.h"
 
 int main(int argc, char** argv)
 {
@@ -8,7 +9,8 @@ int main(int argc, char** argv)
         std::cerr << "Need exactly 2 arguments\n";
         return 1;
     }
-    auto obj = GetFromMacro<int*>(argv[1], argv[2], "int*", "obj");
+    auto obj = GetFromMacro<base::below::Base*>(argv[1], argv[2], "base::below::Base*", "obj");
     std::cout << obj << "\n";
+    obj->doSomething();
     return 0;
 }

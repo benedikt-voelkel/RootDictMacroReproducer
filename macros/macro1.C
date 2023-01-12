@@ -1,10 +1,28 @@
-int* myFunc()
+namespace base {
+namespace below {
+
+class B : public Base
 {
-    //namespaceA::namespaceB::A object;
-    hello();
-    auto i = new int(5);
-    std::cout << *i << "\n";
-    namespaceA::namespaceB::func(*i);
-    std::cout << *i << "\n";
-    return i;
+  public:
+    B() = default;
+    ~B() = default;
+
+    void doSomething() override
+    {
+      Base::doSomething();
+      //base::othernamespace::A any;
+      base::othernamespace::func(mInt);
+      std::cout << "Derived\nmInt=" << mInt << "\n";
+    }
+
+
+};
+
+}
+}
+
+base::below::Base* myFunc()
+{
+    auto myObject = new base::below::B();
+    return myObject;
 }
