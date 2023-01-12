@@ -4,10 +4,18 @@ This is a reproducer showcasing some - presumably - inconsistent library/diction
 
 The reproducer was tested with ROOT `v6-26-10-alice5` at https://github.com/alisw/root.git.
 
+Tested on
+* CentOS7,
+* macOS Monterey.
+
 ## Build and install
 
 ```bash
 mkdir $BUILDIR && cd $BUILDIR
+# in case you are using a toolchain and if that is not properly exported in alienv do
+# this is important for the dictionary generation
+export GCC_TOOLCHAIN_ROOT=<path_to_toolchain_dir>
+# the ussual CMake
 cmake $SOURCEDIR/CMakeLists.txt -DROOT_DIR=$ROOTSYS -DCMAKE_INSTALL_PREFIX=$INSTALLDIR
 make && make install
 ```
@@ -23,18 +31,35 @@ $INSTALLDIR/bin/executable # This should abort, telling you to provide 2 argumen
 ### Expected behaviour
 ```bash
 $INSTALLDIR/bin/executable $SOURCEDIR/macros/macro1.C "myFunc()"
-5
-6
-<pointer to an integer>
+<pointer to a base::below::Base object>
+Base
+mInt=0
+Derived
+mInt=1
 ```
 
 ### Observed behaviour
 ```bash
 $INSTALLDIR/bin/executable $SOURCEDIR/macros/macro1.C "myFunc()"
 
-# Fails e.g. with
-# error: no type named 'func' in namespace 'base::othernamespace'
+$SOURCEDIR/macros/macro1.C:14:29: error: no type named 'func' in namespace 'base::othernamespace'
+      base::othernamespace::func(mInt);
 ```
+
+At the same time, one can do
+```bash
+# enter ROOT shell
+root[0] .L $SOURCEDIR/macros/macro1.C
+```
+or
+```bash
+# enter ROOT shell
+root[0] gROOT->LoadMacro($SOURCEDIR/macros/macro1.C)
+```
+which works just find.
+
+So in the first case there is a problem while actually, somehow ROOT is able to load the macro.
+Indeed, looking into the [source code](sub_dir/src/MacroHelper.cxx), I am using (as in O2) in essence `TROOT::LoadMacro` and `TROOT::ProcessLine`.
 
 ### The inconsitency
 
